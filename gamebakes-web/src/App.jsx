@@ -104,7 +104,7 @@ function App() {
         { id: 'catalogo', nombre: '🍰 Catálogo' },
         { id: 'carrito', nombre: '🛒 Mi Carrito' },
         { id: 'pedidos', nombre: '📦 Mis Pedidos' },
-        { id: 'resenas', nombre: '⭐ Escribir Reseña' },
+        { id: 'resenas', nombre: '⭐ Mis Reseñas' },
         { id: 'perfil', nombre: '👤 Mi Perfil' }
     ];
 

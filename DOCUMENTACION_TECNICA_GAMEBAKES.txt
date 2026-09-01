@@ -1,0 +1,526 @@
+DOCUMENTACION TECNICA - GAMEBAKES
+==================================
+
+RESUMEN EJECUTIVO
+-----------------
+
+Gamebakes es una plataforma de comercio electronico de productos horneados implementada con arquitectura de microservicios. La aplicacion permite a los usuarios registrarse, navegar productos, realizar compras, dejar reseñas y gestionar sus perfiles, mientras que los vendedores pueden gestionar su inventario y procesar pedidos.
+
+CARACTERISTICAS PRINCIPALES:
+- Gestion de Usuarios: Registro, login, recuperacion de contrasena y perfiles
+- Catalogo de Productos: Visualizacion, filtrado y busqueda de productos
+- Sistema de Pedidos: Carrito de compras, seguimiento de estado de pedidos
+- Sistema de Reseñas: Calificacion y comentarios sobre productos
+- Pagos: Integracion con Mercado Pago
+- Roles: CLIENTE y VENDEDOR con permisos diferenciados
+
+ARQUITECTURA:
+- Frontend: React 19 + Vite
+- Backend: 7 microservicios Spring Boot + API Gateway
+- Infraestructura: Docker Compose
+- Base de Datos: MySQL 8.0
+- Mensajeria: Apache Kafka
+- Autenticacion: JWT tokens
+
+
+ARQUITECTURA TECNICA
+--------------------
+
+DIAGRAMA DE ARQUITECTURA:
+
+Frontend (React)
+http://18.205.233.123:5173
+        |
+        | HTTPS
+        |
+API GATEWAY (Port 9000)
+- Enrutamiento
+- Autenticacion (JWT)
+- CORS
+- Filtros personalizados
+        |
+        | HTTP (Service Discovery)
+        |
+    +---+----+----+----+----+
+    |        |    |    |    |
+Usuarios  Perfil Productos Pedidos Reseñas
+:8080    :8084  :8085   :8082  :8081
+    |        |    |    |    |
+    +--------+----+----+----+
+             |
+             | MySQL (3306)
+             |
+       MySQL Server
+       - gb_usuarios
+       - gb_perfil
+       - gb_productos
+       - gb_pedidos
+       - gb_resenas
+       - gb_pagos
+
+KAFKA (Eventos Asincronicos)
+- pagos-exitosos (PagoService -> PedidoListener)
+- stock-reducido (ProductoService -> PagoService)
+
+
+FRONTEND - GAMEBAKES-WEB
+------------------------
+
+TECNOLOGIAS:
+- Framework: React 19.2.4
+- Build Tool: Vite 8.0.4
+- Routing: React Router DOM 7.14.1
+- Icons: Lucide React 1.8.0
+- Linting: ESLint 9.39.4
+
+ESTRUCTURA DE COMPONENTES:
+
+src/
+componentes/
+  autenticacion/
+    - Login.jsx
+    - Registro.jsx
+    - SolicitarRecuperacion.jsx
+    - RestablecerPassword.jsx
+    - authUtils.js
+  productos/
+    - CatalogoProductos.jsx
+    - DetalleCatalogo.jsx
+    - GestionProductos.jsx
+    - Carrito.jsx
+    - ProductosArchivados.jsx
+  perfil/
+    - PerfilUsuario.jsx
+  resenas/
+    - ResenasProducto.jsx
+  seguimiento_pedidos/
+    - SeguimientoPedidos.jsx
+App.jsx
+main.jsx
+assets/
+
+FLUJO DE USUARIO EN FRONTEND:
+
+1. Autenticacion: Login/Registro -> JWT token almacenado en sessionStorage
+2. Navegacion: React Router maneja cambios de vista sin recargar
+3. Estado Global: useState en App.jsx para usuario autenticado y vista activa
+4. API Calls: Fetch directo al API Gateway (http://18.205.233.123:9000)
+5. Carrito: Estado local con productos seleccionados
+
+PUNTOS DE INTEGRACION CON BACKEND:
+- Base URL: http://18.205.233.123:9000
+- Autenticacion: Header Authorization: Bearer <token>
+- Headers de Usuario: X-User-Id y X-User-Role (agregados por API Gateway)
+
+
+BACKEND - MICROSERVICIOS
+-----------------------
+
+1. API GATEWAY (Port 9000)
+
+RESPONSABILIDADES:
+- Enrutamiento de solicitudes a microservicios
+- Autenticacion centralizada (JWT validation)
+- Configuracion CORS
+- Agregacion de headers de usuario
+
+RUTAS PRINCIPALES:
+- /api/usuarios/** -> servicio-usuarios:8080
+- /api/perfil/** -> servicio-perfil:8084
+- /api/productos/** -> servicio-productos:8085
+- /api/pedidos/** -> servicio-pedidos:8082
+- /api/resenas/** -> servicio-resenas:8081
+- /api/pagos/** -> servicio-pagos:8086
+
+FILTROS:
+- AuthenticationFilter: Valida JWT y agrega headers X-User-Id, X-User-Role
+
+
+2. SERVICIO USUARIOS (Port 8080)
+
+RESPONSABILIDADES:
+- Registro de usuarios
+- Autenticacion (login)
+- Recuperacion de contrasena
+- Gestion de tokens JWT
+
+ENDPOINTS:
+- POST /api/usuarios/register - Registro
+- POST /api/usuarios/login - Login
+- POST /api/usuarios/recuperar-password - Solicitar recuperacion
+- POST /api/usuarios/reset-password - Restablecer contrasena
+- GET /api/usuarios/perfil/{id} - Obtener perfil
+
+BASE DE DATOS: gb_usuarios
+- Tablas: usuarios, password_reset_tokens
+
+INTEGRACIONES:
+- EmailService (Mailtrap SMTP)
+- JWT Utils (generacion de tokens)
+
+
+3. SERVICIO PERFIL (Port 8084)
+
+RESPONSABILIDADES:
+- Gestion de perfiles de usuario
+- Informacion adicional del usuario
+
+ENDPOINTS:
+- POST /api/perfil - Crear perfil
+- GET /api/perfil/usuario/{usuarioId} - Obtener perfil
+- PUT /api/perfil/usuario/{usuarioId} - Actualizar perfil
+
+BASE DE DATOS: gb_perfil
+- Tablas: perfiles
+
+SEGURIDAD: Todas las rutas protegidas por API Gateway
+
+
+4. SERVICIO PRODUCTOS (Port 8085)
+
+RESPONSABILIDADES:
+- CRUD de productos
+- Gestion de stock
+- Publicacion de eventos Kafka
+
+ENDPOINTS:
+- GET /api/productos - Listar productos (publico)
+- POST /api/productos - Crear producto (vendedor)
+- PUT /api/productos/{id} - Actualizar producto
+- DELETE /api/productos/{id} - Eliminar producto
+- PATCH /api/productos/{id}/estado - Cambiar estado
+- PUT /api/productos/{id}/restar-stock - Reducir stock
+
+BASE DE DATOS: gb_productos
+- Tablas: productos
+
+KAFKA: Productor de eventos de stock
+
+
+5. SERVICIO PEDIDOS (Port 8082)
+
+RESPONSABILIDADES:
+- Gestion de pedidos
+- Validacion de compras y entregas
+- Consumo de eventos Kafka
+
+ENDPOINTS:
+- GET /api/pedidos/mis-pedidos - Listar pedidos del cliente
+- GET /api/pedidos/vendedor/{vendedorId} - Listar pedidos del vendedor
+- POST /api/pedidos - Crear pedido
+- PUT /api/pedidos/{id}/estado - Actualizar estado
+- GET /api/pedidos/validar-compra/{clienteId}/{productoId} - Validar compra
+- GET /api/pedidos/validar-entregado/{clienteId}/{productoId} - Validar entregado
+
+BASE DE DATOS: gb_pedidos
+- Tablas: pedidos
+
+KAFKA: Consumidor de eventos de pagos exitosos
+- Topic: pagos-exitosos
+- Listener: PedidoListener
+
+FEIGN CLIENT: PedidoClient para comunicacion con servicio-resenas
+
+
+6. SERVICIO RESENAS (Port 8081)
+
+RESPONSABILIDADES:
+- Gestion de reseñas de productos
+- Validacion de compras antes de reseñar
+
+ENDPOINTS:
+- GET /api/resenas/producto/{productoId} - Reseñas de producto
+- GET /api/resenas/cliente/{clienteId} - Reseñas del cliente
+- GET /api/resenas/vendedor/{vendedorId} - Reseñas del vendedor
+- POST /api/resenas - Crear reseña
+
+BASE DE DATOS: gb_resenas
+- Tablas: resenas
+
+FEIGN CLIENT: PedidoClient para validar compras
+- validarCompra(clienteId, productoId)
+- validarEntregado(clienteId, productoId)
+
+KAFKA: Productor de eventos de nuevas reseñas
+
+
+7. SERVICIO PAGOS (Port 8086)
+
+RESPONSABILIDADES:
+- Procesamiento de pagos con Mercado Pago
+- Reduccion de stock
+- Publicacion de eventos Kafka
+
+ENDPOINTS:
+- POST /api/pagos/crear-preferencia - Crear preferencia de pago
+- POST /api/pagos/webhook - Webhook de Mercado Pago
+
+BASE DE DATOS: gb_pagos
+- Tablas: pagos
+
+INTEGRACIONES:
+- Mercado Pago API
+- Kafka: Productor de eventos de pagos exitosos
+- Feign Client: ProductoService para reducir stock
+
+KAFKA: Productor de eventos
+- Topic: pagos-exitosos
+- Listener: PedidoListener (en servicio-pedidos)
+
+
+8. SERVICIO CATALOGO (Port 8087)
+
+RESPONSABILIDADES:
+- Servicio adicional para catalogo (posible agregacion)
+
+BASE DE DATOS: gb_catalogo (H2 en memoria para tests)
+
+
+FLUJO DE DATOS COMPLETO
+------------------------
+
+1. FLUJO DE REGISTRO Y LOGIN
+
+Usuario -> Frontend (Login.jsx)
+         POST /api/usuarios/login
+         {email, password}
+         API Gateway (AuthenticationFilter)
+         (sin token, ruta publica)
+         Servicio Usuarios
+         Validar credenciales
+         Generar JWT token
+         Frontend (guarda token en sessionStorage)
+         Usuario autenticado
+
+
+2. FLUJO DE COMPRA DE PRODUCTO
+
+Usuario -> Frontend (CatalogoProductos.jsx)
+         Selecciona producto
+         Agrega al carrito
+         Frontend (Carrito.jsx)
+         POST /api/pagos/crear-preferencia
+         Headers: Authorization: Bearer <token>
+         API Gateway (AuthenticationFilter)
+         Valida JWT
+         Agrega X-User-Id, X-User-Role
+         Servicio Pagos
+         Crea preferencia Mercado Pago
+         Retorna URL de pago
+         Frontend -> Redireccion a Mercado Pago
+         Usuario completa pago
+         Mercado Pago -> Webhook /api/pagos/webhook
+         Servicio Pagos
+         Procesa pago exitoso
+         Reduce stock (Feign -> Servicio Productos)
+         Publica evento Kafka (pagos-exitosos)
+         Kafka -> Servicio Pedidos (PedidoListener)
+         Crea pedido
+         Notifica al usuario
+
+
+3. FLUJO DE RESENA
+
+Usuario -> Frontend (ResenasProducto.jsx)
+         POST /api/resenas
+         Headers: Authorization: Bearer <token>
+         {productoId, comentario, estrellas}
+         API Gateway (AuthenticationFilter)
+         Valida JWT
+         Agrega X-User-Id, X-User-Role
+         Servicio Reseñas
+         Valida compra (Feign -> Servicio Pedidos)
+         Valida entregado (Feign -> Servicio Pedidos)
+         Si valido: guarda reseña
+         Publica evento Kafka
+         Frontend -> Actualiza lista de reseñas
+
+
+4. FLUJO DE GESTION DE PRODUCTOS (VENDEDOR)
+
+Vendedor -> Frontend (GestionProductos.jsx)
+          POST /api/productos
+          Headers: Authorization: Bearer <token>
+          {nombre, descripcion, precio, categoria}
+          API Gateway (AuthenticationFilter)
+          Valida JWT
+          Verifica rol = VENDEDOR
+          Agrega X-User-Id, X-User-Role
+          Servicio Productos
+          Crea producto
+          Asocia al vendedor (X-User-Id)
+          Frontend -> Actualiza catalogo
+
+
+TECNOLOGIAS Y HERRAMIENTAS
+--------------------------
+
+FRONTEND:
+- React 19.2.4: Framework UI
+- Vite 8.0.4: Build tool y dev server
+- React Router DOM 7.14.1: Enrutamiento
+- Lucide React 1.8.0: Iconos
+- ESLint 9.39.4: Linting
+
+BACKEND:
+- Spring Boot 4.0.6: Framework Java
+- Spring Cloud Gateway: API Gateway
+- Spring Security: Autenticacion y autorizacion
+- Spring Data JPA: Persistencia
+- MySQL 8.0: Base de datos relacional
+- Apache Kafka 7.4.0: Mensajeria asincronica
+- Feign Client: Comunicacion entre servicios
+- Resilience4j: Circuit Breaker y Retry
+
+DEVOPS:
+- Docker: Contenedores
+- Docker Compose: Orquestacion local
+- GitHub Actions: CI/CD Pipeline
+- Maven: Gestion de dependencias
+
+TESTING:
+- JUnit 5: Framework de testing
+- Mockito: Mocking
+- Spring Boot Test: Integracion testing
+- Jacoco: Cobertura de codigo
+
+
+CONFIGURACION DE RED
+--------------------
+
+PUERTOS DE SERVICIOS:
+- Frontend: 5173
+- API Gateway: 9000
+- Servicio Usuarios: 8080
+- Servicio Reseñas: 8081
+- Servicio Pedidos: 8082
+- Servicio Perfil: 8084
+- Servicio Productos: 8085
+- Servicio Pagos: 8086
+- MySQL: 3306
+- Kafka: 9092
+
+URLS DE PRODUCCION:
+- Frontend: http://18.205.233.123:5173
+- API Gateway: http://18.205.233.123:9000
+- Kafka: 18.205.233.123:9092
+
+
+SEGURIDAD
+---------
+
+AUTENTICACION:
+- JWT Tokens: Generados por servicio-usuarios
+- Secret Key: "GameBakes_Secret_Key_2026_No_Compartir"
+- Algoritmo: HS256
+- Expiracion: 1 hora
+
+AUTORIZACION:
+- Roles: CLIENTE, VENDEDOR
+- API Gateway: Valida tokens y agrega headers
+- Microservicios: Permiten todas las solicitudes (autenticacion delegada)
+
+CORS:
+- Origen permitido: http://18.205.233.123:5173
+- Metodos: GET, POST, PUT, PATCH, DELETE, OPTIONS
+- Headers: Todos permitidos
+
+
+BASE DE DATOS
+-------------
+
+ESQUEMA DE BASES DE DATOS:
+- gb_usuarios: usuarios, password_reset_tokens
+- gb_perfil: perfiles
+- gb_productos: productos
+- gb_pedidos: pedidos
+- gb_resenas: resenas
+- gb_pagos: pagos
+
+CONFIGURACION MYSQL:
+- Host: mysql-server (Docker) / 18.205.233.123 (Produccion)
+- Port: 3306
+- User: root
+- Password: root
+
+
+EVENTOS KAFKA
+-------------
+
+TOPICS:
+- pagos-exitosos: Notifica cuando un pago se completa exitosamente
+  - Producer: Servicio Pagos
+  - Consumer: Servicio Pedidos (PedidoListener)
+
+FORMATO DE MENSAJES:
+{
+  "clienteId": 123,
+  "clienteNombre": "Juan",
+  "items": [
+    {"productoId": 100, "cantidad": 2}
+  ]
+}
+
+
+CI/CD PIPELINE
+--------------
+
+GITHUB ACTIONS (.github/workflows/pipeline.yml):
+- Branches: main, feature/Luis, feature/Esther, feature/Franco, franco2
+- Triggers: Push a branches especificados
+- Jobs: compilar-y-subir
+- Runner: ubuntu-latest
+
+
+TESTING
+-------
+
+COBERTURA DE PRUEBAS UNITARIAS:
+- servicio-usuarios: 73 tests OK
+- servicio-perfil: 58 tests OK
+- servicio-productos: 48 tests OK
+- api-gateway: 8 tests OK
+- servicio-pagos: 1 test (1 skipped - DB connection)
+- servicio-pedidos: 50 tests (1 skipped - DB connection)
+- servicio-catalogo: 1 test OK
+- servicio-resenas: 42 tests (1 skipped - DB connection)
+
+ESTRATEGIA DE TESTING:
+- Unit Tests: Mockito para mocking de dependencias
+- Integration Tests: @SpringBootTest con H2 en memoria
+- API Gateway Tests: Validacion de JWT y filtros
+
+
+CONSIDERACIONES DE ESCALABILIDAD
+---------------------------------
+
+ESCALABILIDAD HORIZONTAL:
+- Cada microservicio puede escalarse independientemente
+- API Gateway puede balancear carga
+- Kafka permite procesamiento asincronico
+
+ESCALABILIDAD VERTICAL:
+- MySQL puede migrarse a cluster
+- Kafka puede configurarse con multiples brokers
+- Redis puede agregarse para caching
+
+
+MEJORAS FUTURAS SUGERIDAS
+-------------------------
+
+1. Caching: Implementar Redis para cache de productos y sesiones
+2. Search: Elasticsearch para busqueda avanzada de productos
+3. Monitoring: Prometheus + Grafana para monitoreo
+4. Logging: ELK Stack para centralizacion de logs
+5. Rate Limiting: Implementar limites de tasa en API Gateway
+6. API Documentation: Swagger/OpenAPI para documentacion
+7. Event Sourcing: Implementar event sourcing para auditoria
+8. Distributed Tracing: Jaeger o Zipkin para tracing distribuido
+
+
+CONCLUSION
+----------
+
+Gamebakes implementa una arquitectura de microservicios moderna y escalable con separacion clara de responsabilidades. El uso de API Gateway centraliza la autenticacion y enrutamiento, mientras que Kafka permite comunicacion asincronica entre servicios. El frontend React proporciona una experiencia de usuario fluida con gestion de estado local y autenticacion basada en JWT.
+
+La arquitectura esta preparada para escalar horizontalmente, con cada microservicio capaz de operar independientemente. La implementacion actual cubre los casos de negocio principales y proporciona una base solida para futuras mejoras.
