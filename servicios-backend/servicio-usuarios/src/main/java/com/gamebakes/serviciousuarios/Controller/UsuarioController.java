@@ -30,46 +30,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioActualizado);
     }
 
-    @PostMapping("/registrar")
-    public ResponseEntity<Map<String, Object>> registrarUusario(@Valid @RequestBody RegistroDTO dto) {
-        Usuario nuevoUsuario = usuarioService.registrarUsuario(dto);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", nuevoUsuario.getId());
-        response.put("usuarioId", nuevoUsuario.getId());
-        response.put("username", nuevoUsuario.getUsername());
-        response.put("email", nuevoUsuario.getEmail());
-        response.put("nombreCompleto", nuevoUsuario.getNombreCompleto());
-        response.put("rol", nuevoUsuario.getRol());
-        
-        return ResponseEntity.ok(response);
-    }
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginDTO dto) {
-        String token = usuarioService.loginUsuario(dto);
-        return ResponseEntity.ok(token);
-    }
-
-    @PostMapping("/recuperacion/solicitar")
-    public ResponseEntity<Map<String, String>> solicitarRecuperacion(@RequestBody Map<String, String> request){
-        String email = request.get("email");
-        usuarioService.solicitarRecuperacion(email);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Se ha enviado un enlace de recuperación a tu correo.");
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/recuperacion/confirmar")
-    public ResponseEntity<Map<String, String>> confirmarRecuperacion(@RequestBody Map<String, String> request){
-        String token = request.get("token");
-        String nuevaPassword = request.get("password");
-
-        usuarioService.completarRecuperacion(token, nuevaPassword);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Contraseña actualizada con éxito. Ya puedes iniciar sesión");
-        return ResponseEntity.ok(response);
-    }
+    
 }
