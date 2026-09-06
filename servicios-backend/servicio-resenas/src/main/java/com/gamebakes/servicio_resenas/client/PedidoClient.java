@@ -1,6 +1,5 @@
 package com.gamebakes.servicio_resenas.client;
 
-import com.gamebakes.servicio_resenas.Config.FeignLoggerConfig;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,8 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(
         name = "servicio-pedidos",
-        url = "http://servicio-pedidos:8082/api/pedidos",
-        configuration = FeignLoggerConfig.class
+        url = "http://servicio-pedidos:8082/api/pedidos"
 )
 public interface PedidoClient {
 

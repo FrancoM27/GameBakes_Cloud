@@ -23,87 +23,87 @@ class SecurityConfigTest {
     private SecurityConfig securityConfig;
 
     @Test
-    void securityFilterChain_ConfiguracionCorrecta() throws Exception {
+    void filterChain_ConfiguracionCorrecta() throws Exception {
         HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
         DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
 
         when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.cors(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.oauth2ResourceServer(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
 
-        SecurityFilterChain result = securityConfig.securityFilterChain(httpSecurityMock);
+        SecurityFilterChain result = securityConfig.filterChain(httpSecurityMock);
 
         assertNotNull(result);
         verify(httpSecurityMock, times(1)).csrf(any());
-        verify(httpSecurityMock, times(1)).cors(any());
         verify(httpSecurityMock, times(1)).sessionManagement(any());
         verify(httpSecurityMock, times(1)).authorizeHttpRequests(any());
+        verify(httpSecurityMock, times(1)).oauth2ResourceServer(any());
         verify(httpSecurityMock, times(1)).build();
     }
 
     @Test
-    void securityFilterChain_CsrfDeshabilitado() throws Exception {
+    void filterChain_CsrfDeshabilitado() throws Exception {
         HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
         DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
 
         when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.cors(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.oauth2ResourceServer(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
 
-        securityConfig.securityFilterChain(httpSecurityMock);
+        securityConfig.filterChain(httpSecurityMock);
 
         verify(httpSecurityMock, times(1)).csrf(any());
     }
 
     @Test
-    void securityFilterChain_CorsConfigurado() throws Exception {
+    void filterChain_SesionStateless() throws Exception {
         HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
         DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
 
         when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.cors(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.oauth2ResourceServer(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
 
-        securityConfig.securityFilterChain(httpSecurityMock);
-
-        verify(httpSecurityMock, times(1)).cors(any());
-    }
-
-    @Test
-    void securityFilterChain_SesionStateless() throws Exception {
-        HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
-        DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
-
-        when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.cors(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
-
-        securityConfig.securityFilterChain(httpSecurityMock);
+        securityConfig.filterChain(httpSecurityMock);
 
         verify(httpSecurityMock, times(1)).sessionManagement(any());
     }
 
     @Test
-    void securityFilterChain_AutorizacionPermitAll() throws Exception {
+    void filterChain_AutorizacionPermitAll() throws Exception {
         HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
         DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
 
         when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
-        when(httpSecurityMock.cors(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.oauth2ResourceServer(any())).thenReturn(httpSecurityMock);
         when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
 
-        securityConfig.securityFilterChain(httpSecurityMock);
+        securityConfig.filterChain(httpSecurityMock);
 
         verify(httpSecurityMock, times(1)).authorizeHttpRequests(any());
+    }
+
+    @Test
+    void filterChain_OAuth2ResourceServer() throws Exception {
+        HttpSecurity httpSecurityMock = mock(HttpSecurity.class);
+        DefaultSecurityFilterChain defaultSecurityFilterChain = mock(DefaultSecurityFilterChain.class);
+
+        when(httpSecurityMock.csrf(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.sessionManagement(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.authorizeHttpRequests(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.oauth2ResourceServer(any())).thenReturn(httpSecurityMock);
+        when(httpSecurityMock.build()).thenReturn(defaultSecurityFilterChain);
+
+        securityConfig.filterChain(httpSecurityMock);
+
+        verify(httpSecurityMock, times(1)).oauth2ResourceServer(any());
     }
 }
