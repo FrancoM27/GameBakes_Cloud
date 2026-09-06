@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAxios } from '../autenticacion/useAxios.js';
 
 export default function ProductosArchivados({ vendedorId, alRestaurarExitoso }) {
+    const api = useAxios();
     const [productosAnulados, setProductosAnulados] = useState([]);
     const [cargando, setCargando] = useState(true);
 
-    const token = sessionStorage.getItem('token');
     const colorCian = '#00d4ff';
 
     useEffect(() => {
@@ -16,13 +17,10 @@ export default function ProductosArchivados({ vendedorId, alRestaurarExitoso }) 
     const obtenerArchivados = async () => {
         setCargando(true);
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/productos/vendedor/${vendedorId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
+            const response = await api.get(`/api/productos/vendedor/${vendedorId}`);
 
-            if (Array.isArray(data)) {
-                const ocultos = data.filter(p => !p.activo);
+            if (Array.isArray(response.data)) {
+                const ocultos = response.data.filter(p => !p.activo);
                 setProductosAnulados(ocultos);
             }
         } catch (err) {
@@ -34,23 +32,13 @@ export default function ProductosArchivados({ vendedorId, alRestaurarExitoso }) 
 
     const handleRestaurar = async (productoId) => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/productos/${productoId}/estado?activo=true`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Role': 'VENDEDOR'
-                }
-            });
+            await api.patch(`/api/productos/${productoId}/estado?activo=true`);
 
-            if (response.ok) {
-                alert("✅ ¡Producto restaurado con éxito! Volverá a aparecer en el catálogo público.");
-                obtenerArchivados();
-                if (alRestaurarExitoso) alRestaurarExitoso();
-            } else {
-                alert("⚠️ No se pudo restaurar el producto.");
-            }
+            alert("✅ ¡Producto restaurado con éxito! Volverá a aparecer en el catálogo público.");
+            obtenerArchivados();
+            if (alRestaurarExitoso) alRestaurarExitoso();
         } catch (err) {
-            alert("❌ Error de conexión al intentar restaurar.");
+            alert(`❌ Error al intentar restaurar: ${err.response?.data || "Conexión rechazada"}`);
         }
     };
 
