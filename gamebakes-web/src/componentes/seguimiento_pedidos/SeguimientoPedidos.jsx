@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAxios } from '../autenticacion/useAxios.js';
 
 export default function SeguimientoPedidos({ rol, usuarioId }) {
+    const api = useAxios();
     const [pedidos, setPedidos] = useState([]);
     const [cargando, setCargando] = useState(true);
 
@@ -12,21 +14,14 @@ export default function SeguimientoPedidos({ rol, usuarioId }) {
         try {
             setCargando(true);
             const token = sessionStorage.getItem('token');
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
             const url = rol === 'vendedor'
-                ? `${import.meta.env.VITE_API_URL}/api/pedidos/vendedor/${usuarioId}`
-                : `${import.meta.env.VITE_API_URL}/api/pedidos/mis-pedidos`;
+                ? `/api/pedidos/vendedor/${usuarioId}`
+                : `/api/pedidos/mis-pedidos`;
 
-            const res = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                setPedidos(data);
-            }
+            const res = await api.get(url, config);
+            setPedidos(res.data);
         } catch (err) {
             console.error(err);
         } finally {
@@ -50,17 +45,17 @@ export default function SeguimientoPedidos({ rol, usuarioId }) {
     const cambiarEstado = async (id, nuevoEstado) => {
         try {
             const token = sessionStorage.getItem('token');
-            await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${id}/estado?nuevoEstado=${nuevoEstado}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+            // Enviamos un cuerpo vacío {} ya que es un PUT con Query Parameter
+            await api.put(`/api/pedidos/${id}/estado?nuevoEstado=${nuevoEstado}`, {}, config);
             cargarPedidos();
         } catch (err) {
             console.error(err);
         }
     };
 
-    if (cargando) return <p style={{textAlign: 'center', color: colorTema}}>Sincronizando...</p>;
+    if (cargando) return <p style={{ textAlign: 'center', color: colorTema }}>Sincronizando...</p>;
 
     return (
         <div style={{ padding: '10px' }}>
@@ -129,13 +124,4 @@ export default function SeguimientoPedidos({ rol, usuarioId }) {
     );
 }
 
-const btnBase = {
-    padding: '8px 15px',
-    backgroundColor: 'transparent',
-    border: '1px solid',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.75rem',
-    fontWeight: 'bold',
-    transition: '0.3s'
-};
+const btnBase = { padding: '8px 15px', backgroundColor: 'transparent', border: '1px solid', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', transition: '0.3s' };

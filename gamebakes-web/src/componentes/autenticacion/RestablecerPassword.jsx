@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useAxios } from './useAxios.js';
 
 export default function RestablecerPassword({ token, alFinalizar }) {
+    const api = useAxios();
     const [password, setPassword] = useState('');
     const [confirmar, setConfirmar] = useState('');
     const [mostrarPassword, setMostrarPassword] = useState(false);
@@ -21,22 +23,11 @@ export default function RestablecerPassword({ token, alFinalizar }) {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/recuperacion/confirmar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                alert("✅ ¡Password actualizada con éxito! Ahora puedes iniciar sesión.");
-                alFinalizar();
-            } else {
-                setError(`❌ ${data.message || "Error al restablecer"}`);
-            }
+            await api.post('/api/usuarios/recuperacion/confirmar', { token, password });
+            alert("✅ ¡Password actualizada con éxito! Ahora puedes iniciar sesión.");
+            alFinalizar();
         } catch (err) {
-            setError('📡 Error de conexión con el servidor.');
+            setError(`❌ ${err.response?.data?.message || "Error de conexión con el servidor."}`);
         }
     };
 
@@ -44,49 +35,18 @@ export default function RestablecerPassword({ token, alFinalizar }) {
         <div style={containerStyle}>
             <div style={cardStyle}>
                 <h2 style={{...titleStyle, color: colorCian}}>NUEVA CONTRASEÑA</h2>
-                <p style={{color: '#aaa', fontSize: '0.9rem', marginBottom: '20px'}}>
-                    Ingresa tu nueva clave de acceso para volver al juego.
-                </p>
-
+                <p style={{color: '#aaa', fontSize: '0.9rem', marginBottom: '20px'}}>Ingresa tu nueva clave de acceso para volver al juego.</p>
                 {error && <p style={errorStyle}>{error}</p>}
 
                 <form onSubmit={handleConfirmar}>
-                    {/* Campo Nueva Password */}
                     <div style={{...inputGroup, position: 'relative'}}>
-                        <input
-                            type={mostrarPassword ? 'text' : 'password'}
-                            placeholder="Nueva Password"
-                            style={inputStyle}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setMostrarPassword(!mostrarPassword)}
-                            style={eyeButtonStyle}
-                        >
-                            {mostrarPassword ? '👁️‍🗨️' : '👁️'}
-                        </button>
+                        <input type={mostrarPassword ? 'text' : 'password'} placeholder="Nueva Password" style={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} style={eyeButtonStyle}>{mostrarPassword ? '👁️‍🗨️' : '👁️'}</button>
                     </div>
 
-                    {/* Campo Confirmar Password */}
                     <div style={{...inputGroup, position: 'relative'}}>
-                        <input
-                            type={mostrarConfirmar ? 'text' : 'password'}
-                            placeholder="Confirmar Password"
-                            style={inputStyle}
-                            value={confirmar}
-                            onChange={(e) => setConfirmar(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setMostrarConfirmar(!mostrarConfirmar)}
-                            style={eyeButtonStyle}
-                        >
-                            {mostrarConfirmar ? '👁️‍🗨️' : '👁️'}
-                        </button>
+                        <input type={mostrarConfirmar ? 'text' : 'password'} placeholder="Confirmar Password" style={inputStyle} value={confirmar} onChange={(e) => setConfirmar(e.target.value)} required />
+                        <button type="button" onClick={() => setMostrarConfirmar(!mostrarConfirmar)} style={eyeButtonStyle}>{mostrarConfirmar ? '👁️‍🗨️' : '👁️'}</button>
                     </div>
 
                     <button type="submit" style={btnStyle}>ACTUALIZAR Y ENTRAR</button>

@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
+import { useAxios } from './useAxios.js';
 
 export default function Registro({ alVolverAlLogin }) {
-    const [form, setForm] = useState({
-        username: '',
-        email: '',
-        password: '',
-        confirmarPassword: '',
-        nombreCompleto: '',
-        rol: 'cliente'
-    });
+    const api = useAxios();
+    const [form, setForm] = useState({ username: '', email: '', password: '', confirmarPassword: '', nombreCompleto: '', rol: 'cliente' });
     const [mostrarPassword, setMostrarPassword] = useState(false);
     const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
     const [error, setError] = useState('');
@@ -18,12 +13,8 @@ export default function Registro({ alVolverAlLogin }) {
         e.preventDefault();
         setError('');
 
-        if (form.password.length < 8) {
-            setError('⚠️ La contraseña debe tener al menos 8 caracteres.');
-            return;
-        }
-        if (!/[A-Z]/.test(form.password)) {
-            setError('⚠️ La contraseña requiere al menos una letra mayúscula.');
+        if (form.password.length < 8 || !/[A-Z]/.test(form.password)) {
+            setError('⚠️ La contraseña debe tener al menos 8 caracteres y una mayúscula.');
             return;
         }
         if (form.password !== form.confirmarPassword) {
@@ -40,54 +31,30 @@ export default function Registro({ alVolverAlLogin }) {
         };
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/registrar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosParaEnviar)
-            });
+            const response = await api.post('/api/usuarios/registrar', datosParaEnviar);
+            const data = response.data;
 
-            const data = await response.json().catch(() => null);
+            try {
+                const token = data.token || null;
+                const usuarioId = data.id || data.usuarioId || null;
 
-            if (response.ok) {
-                try {
-                    const token = data.token || null;
-                    const usuarioId = data.id || data.usuarioId || null;
+                if (usuarioId) {
+                    const perfilData = {
+                        usuarioId: usuarioId, username: form.username, email: form.email, rol: form.rol.toUpperCase(), nombreCompleto: form.nombreCompleto, telefono: '', direccion: ''
+                    };
 
-                    if (usuarioId) {
-                        const perfilData = {
-                            usuarioId: usuarioId,
-                            username: form.username,
-                            email: form.email,
-                            rol: form.rol.toUpperCase(),
-                            nombreCompleto: form.nombreCompleto,
-                            telefono: '',
-                            direccion: ''
-                        };
-
-                        const perfilResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/perfil`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                ...(token && { 'Authorization': `Bearer ${token}` })
-                            },
-                            body: JSON.stringify(perfilData)
-                        });
-
-                        if (!perfilResponse.ok) {
-                            console.warn('No se pudo crear el perfil automáticamente, pero el usuario fue registrado');
-                        }
-                    }
-                } catch (perfilError) {
-                    console.warn('Error al crear perfil automáticamente:', perfilError);
+                    // Si hay token, se inyectará manualmente solo para esta petición inicial
+                    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                    await api.post('/api/perfil', perfilData, config);
                 }
-
-                alert(`🚀 ¡Cuenta creada! Ya puedes iniciar sesión.`);
-                alVolverAlLogin();
-            } else {
-                setError(`❌ ${data?.message || "Error en el registro (Status: " + response.status + ")"}`);
+            } catch (perfilError) {
+                console.warn('Error al crear perfil automáticamente:', perfilError);
             }
+
+            alert(`🚀 ¡Cuenta creada! Ya puedes iniciar sesión.`);
+            alVolverAlLogin();
         } catch (err) {
-            setError('📡 Error crítico: No se pudo contactar al servidor.');
+            setError(`❌ ${err.response?.data?.message || "Error crítico: No se pudo contactar al servidor."}`);
         }
     };
 
@@ -102,23 +69,20 @@ export default function Registro({ alVolverAlLogin }) {
                 {error && <p style={errorStyle}>{error}</p>}
 
                 <form onSubmit={handleRegistro}>
-                    <div style={inputGroup}>
-                        <input type="text" placeholder="Nombre Real" style={inputStyle} value={form.nombreCompleto} required onChange={(e) => setForm({...form, nombreCompleto: e.target.value})} />
-                    </div>
-                    <div style={inputGroup}>
-                        <input type="text" placeholder="Username" style={inputStyle} value={form.username} required onChange={(e) => setForm({...form, username: e.target.value})} />
-                    </div>
-                    <div style={inputGroup}>
-                        <input type="email" placeholder="Email" style={inputStyle} value={form.email} required onChange={(e) => setForm({...form, email: e.target.value})} />
-                    </div>
+                    <div style={inputGroup}><input type="text" placeholder="Nombre Real" style={inputStyle} value={form.nombreCompleto} required onChange={(e) => setForm({...form, nombreCompleto: e.target.value})} /></div>
+                    <div style={inputGroup}><input type="text" placeholder="Username" style={inputStyle} value={form.username} required onChange={(e) => setForm({...form, username: e.target.value})} /></div>
+                    <div style={inputGroup}><input type="email" placeholder="Email" style={inputStyle} value={form.email} required onChange={(e) => setForm({...form, email: e.target.value})} /></div>
+
                     <div style={{...inputGroup, position: 'relative'}}>
                         <input type={mostrarPassword ? 'text' : 'password'} placeholder="Contraseña (8+ carac, 1 Mayús)" style={inputStyle} value={form.password} required onChange={(e) => setForm({...form, password: e.target.value})} />
                         <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} style={eyeButtonStyle}>{mostrarPassword ? '👁️‍🗨️' : '👁️'}</button>
                     </div>
+
                     <div style={{...inputGroup, position: 'relative'}}>
                         <input type={mostrarConfirmar ? 'text' : 'password'} placeholder="Repetir Contraseña" style={inputStyle} value={form.confirmarPassword} required onChange={(e) => setForm({...form, confirmarPassword: e.target.value})} />
                         <button type="button" onClick={() => setMostrarConfirmar(!mostrarConfirmar)} style={eyeButtonStyle}>{mostrarConfirmar ? '👁️‍🗨️' : '👁️'}</button>
                     </div>
+
                     <div style={inputGroup}>
                         <label style={{ color: colorCian, display: 'block', marginBottom: '8px', fontSize: '0.8rem', fontWeight: 'bold' }}>TIPO DE PERFIL:</label>
                         <select style={{...inputStyle, appearance: 'none', cursor: 'pointer'}} value={form.rol} onChange={(e) => setForm({...form, rol: e.target.value})}>

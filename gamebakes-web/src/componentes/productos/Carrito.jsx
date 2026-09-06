@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { getAuthData } from '../autenticacion/authUtils';
+import { useAxios } from '../autenticacion/useAxios.js';
 
 const Carrito = ({ usuarioId, onCambiarSeccion }) => {
+    const api = useAxios();
     const [items, setItems] = useState([]);
     const [detallesProductos, setDetallesProductos] = useState({});
     const [cargando, setCargando] = useState(true);
     const [esperandoPago, setEsperandoPago] = useState(false);
     const [idPagoGenerado, setIdPagoGenerado] = useState(null);
     const [mostrarExito, setMostrarExito] = useState(false);
+    const [procesando, setProcesando] = useState(false);
 
     const token = sessionStorage.getItem('token');
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
     useEffect(() => {
         obtenerCarrito();
@@ -17,13 +21,10 @@ const Carrito = ({ usuarioId, onCambiarSeccion }) => {
 
     const obtenerCarrito = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/bff/carrito/completo/${usuarioId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            setItems(data.items);
+            const response = await api.get(`/bff/carrito/completo/${usuarioId}`, config);
+            setItems(response.data.items);
         } catch (err) {
-            console.error(err);
+            console.error("Error al obtener carrito:", err);
         } finally {
             setCargando(false);
         }
@@ -31,24 +32,16 @@ const Carrito = ({ usuarioId, onCambiarSeccion }) => {
 
     const handleProcederAlPago = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pagos/iniciar-desde-carrito/${usuarioId}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.transaccionId) {
-                    setIdPagoGenerado(data.idPago);
-                    setEsperandoPago(true);
-                    window.open(data.transaccionId, '_blank');
-                }
+            const response = await api.post(`/api/pagos/iniciar-desde-carrito/${usuarioId}`, {}, config);
+            if (response.data.transaccionId) {
+                setIdPagoGenerado(response.data.idPago);
+                setEsperandoPago(true);
+                window.open(response.data.transaccionId, '_blank');
             }
         } catch (err) {
             alert("Error al iniciar el pago.");
         }
     };
-
-    const [procesando, setProcesando] = useState(false);
 
     const confirmarPagoManual = async () => {
         if (procesando) return;
@@ -57,23 +50,18 @@ const Carrito = ({ usuarioId, onCambiarSeccion }) => {
             const auth = getAuthData();
             const nombreReal = auth && auth.nombre ? auth.nombre : 'Cliente';
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pagos/confirmar/${idPagoGenerado}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': String(usuarioId),
-                    'X-User-Name': nombreReal
-                }
-            });
-            if (response.ok) {
-                setMostrarExito(true);
-                setItems([]);
-                setEsperandoPago(false);
-            } else {
-                alert("El servidor no pudo confirmar el pago.");
-            }
+            const headersPago = {
+                ...config.headers,
+                'X-User-Id': String(usuarioId),
+                'X-User-Name': nombreReal
+            };
+
+            await api.post(`/api/pagos/confirmar/${idPagoGenerado}`, {}, { headers: headersPago });
+            setMostrarExito(true);
+            setItems([]);
+            setEsperandoPago(false);
         } catch (err) {
-            alert("Error al confirmar.");
+            alert("Error al confirmar o el servidor rechazó el pago.");
         } finally {
             setProcesando(false);
         }
@@ -93,17 +81,7 @@ const Carrito = ({ usuarioId, onCambiarSeccion }) => {
                 </p>
                 <button
                     onClick={() => onCambiarSeccion('pedidos')}
-                    style={{
-                        padding: '18px 50px',
-                        backgroundColor: '#00d4ff',
-                        color: 'black',
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        fontSize: '1.1rem',
-                        boxShadow: '0 0 20px rgba(0,212,255,0.4)'
-                    }}
+                    style={{ padding: '18px 50px', backgroundColor: '#00d4ff', color: 'black', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem', boxShadow: '0 0 20px rgba(0,212,255,0.4)' }}
                 >
                     IR A MIS PEDIDOS
                 </button>
@@ -120,18 +98,7 @@ const Carrito = ({ usuarioId, onCambiarSeccion }) => {
                 <button
                     onClick={confirmarPagoManual}
                     disabled={procesando}
-                    style={{
-                        marginTop: '30px',
-                        padding: '15px 40px',
-                        backgroundColor: procesando ? '#228822' : '#44ff44',
-                        color: 'black',
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontWeight: 'bold',
-                        cursor: procesando ? 'not-allowed' : 'pointer',
-                        fontSize: '1.2rem',
-                        opacity: procesando ? 0.7 : 1
-                    }}
+                    style={{ marginTop: '30px', padding: '15px 40px', backgroundColor: procesando ? '#228822' : '#44ff44', color: 'black', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: procesando ? 'not-allowed' : 'pointer', fontSize: '1.2rem', opacity: procesando ? 0.7 : 1 }}
                 >
                     {procesando ? '⏳ PROCESANDO PEDIDO...' : '✅ YA PAGUÉ, LIMPIAR MI CARRITO'}
                 </button>
