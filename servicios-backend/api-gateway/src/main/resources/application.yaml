@@ -13,8 +13,8 @@ spring:
           '[/**]':
             allowed-origins:
               - "http://localhost:5173"
-              - "${FRONTEND_URL:http://18.211.231.0:5173}"
-              - "${FRONTEND_URL_ALT:http://18.211.231.0}"
+              - "http://18.211.231.0:5173"
+              - "http://18.211.231.0"
             allowed-methods:
               - GET
               - POST
@@ -26,53 +26,41 @@ spring:
             allow-credentials: true
       routes:
         - id: servicio-usuarios-perfil
-          uri: http://servicio-usuarios:8080
+          uri: "http://servicio-usuarios:8080"
           predicates:
             - Path=/api/usuarios/perfil/**
-          filters:
-            - AuthenticationFilter
         - id: servicio-usuarios-publico
-          uri: http://servicio-usuarios:8080
+          uri: "http://servicio-usuarios:8080"
           predicates:
             - Path=/api/usuarios/**
         - id: servicio-resenas
-          uri: http://servicio-resenas:8081
+          uri: "http://servicio-resenas:8081"
           predicates:
             - Path=/api/resenas/**
-          filters:
-            - AuthenticationFilter
         - id: servicio-pedidos
-          uri: http://servicio-pedidos:8082
+          uri: "http://servicio-pedidos:8082"
           predicates:
             - Path=/api/pedidos/**
-          filters:
-            - AuthenticationFilter
         - id: servicio-perfil-crear
-          uri: http://servicio-perfil:8084
+          uri: "http://servicio-perfil:8084"
           predicates:
             - Path=/api/perfil
             - Method=POST
         - id: servicio-perfil
-          uri: http://servicio-perfil:8084
+          uri: "http://servicio-perfil:8084"
           predicates:
             - Path=/api/perfil/**
-          filters:
-            - AuthenticationFilter
         - id: servicio-productos-privado
-          uri: http://servicio-productos:8085
+          uri: "http://servicio-productos:8085"
           predicates:
             - Path=/api/productos/**
             - Method=POST, PUT, PATCH, DELETE
-          filters:
-            - AuthenticationFilter
         - id: servicio-productos-publico
-          uri: http://servicio-productos:8085
+          uri: "http://servicio-productos:8085"
           predicates:
             - Path=/api/productos/**
             - Method=GET, OPTIONS
         - id: servicio-pagos
-          uri: http://servicio-pagos:8086
+          uri: "http://servicio-pagos:8086"
           predicates:
             - Path=/api/pagos/**
-          filters:
-            - AuthenticationFilter
