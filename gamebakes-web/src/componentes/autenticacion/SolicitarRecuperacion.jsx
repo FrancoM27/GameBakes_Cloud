@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useAxios } from './useAxios.js';
 
 export default function SolicitarRecuperacion({ alVolverAlLogin }) {
+    const api = useAxios();
     const [email, setEmail] = useState('');
     const [mensaje, setMensaje] = useState('');
     const [error, setError] = useState('');
@@ -12,21 +14,10 @@ export default function SolicitarRecuperacion({ alVolverAlLogin }) {
         setMensaje('');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/usuarios/recuperacion/solicitar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setMensaje(`📧 ${data.message}`);
-            } else {
-                setError(`❌ ${data.message || "Error al solicitar"}`);
-            }
+            const response = await api.post('/api/usuarios/recuperacion/solicitar', { email });
+            setMensaje(`📧 ${response.data.message}`);
         } catch (err) {
-            setError('📡 Error de conexión con el servidor.');
+            setError(`❌ ${err.response?.data?.message || "Error de conexión con el servidor."}`);
         }
     };
 
@@ -34,27 +25,17 @@ export default function SolicitarRecuperacion({ alVolverAlLogin }) {
         <div style={containerStyle}>
             <div style={cardStyle}>
                 <h2 style={{...titleStyle, color: colorCian}}>RECUPERAR ACCESO</h2>
-                <p style={{color: '#aaa', fontSize: '0.9rem', marginBottom: '20px'}}>
-                    Escribe tu email y te enviaremos un link mágico para volver al juego.
-                </p>
+                <p style={{color: '#aaa', fontSize: '0.9rem', marginBottom: '20px'}}>Escribe tu email y te enviaremos un link mágico para volver al juego.</p>
 
                 {error && <p style={errorStyle}>{error}</p>}
                 {mensaje && <p style={successStyle}>{mensaje}</p>}
 
                 {!mensaje && (
                     <form onSubmit={handleSubmit}>
-                        <input
-                            type="email"
-                            placeholder="Tu correo electrónico..."
-                            style={inputStyle}
-                            value={email}
-                            required
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
+                        <input type="email" placeholder="Tu correo electrónico..." style={inputStyle} value={email} required onChange={(e) => setEmail(e.target.value)} />
                         <button type="submit" style={btnStyle}>ENVIAR ENLACE</button>
                     </form>
                 )}
-
                 <button onClick={alVolverAlLogin} style={backButtonStyle}>VOLVER AL LOGIN</button>
             </div>
         </div>

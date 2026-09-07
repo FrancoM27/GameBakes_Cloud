@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import {getAuthData} from '../autenticacion/authUtils';
+import { getAuthData } from '../autenticacion/authUtils';
+import { useAxios } from '../autenticacion/useAxios.js';
 
 export default function PagoExito() {
+    const api = useAxios();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [estadoPago, setEstadoPago] = useState('validando');
@@ -26,15 +27,15 @@ export default function PagoExito() {
             const usuarioId = auth ? auth.id : '';
             const nombreReal = auth && auth.nombre ? auth.nombre : 'Cliente';
 
-            // Usando variable de entorno + Headers correctos que pedía tu backend
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/pagos/confirmar/${idPago}`, {}, {
+            const configPago = {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     'X-User-Id': String(usuarioId),
                     'X-User-Name': nombreReal
                 }
-            });
+            };
 
+            await api.post(`/api/pagos/confirmar/${idPago}`, {}, configPago);
             setEstadoPago('aprobado');
         } catch (error) {
             console.error("Error confirmando en el backend:", error);
@@ -44,7 +45,6 @@ export default function PagoExito() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#111] text-white p-6">
-
             {estadoPago === 'validando' && (
                 <div className="text-center animate-pulse">
                     <div className="w-16 h-16 border-4 border-[#00d4ff] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>

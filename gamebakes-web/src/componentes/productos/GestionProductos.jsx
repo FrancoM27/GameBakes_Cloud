@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import DetalleProducto from './DetalleProducto';
 import ProductosArchivados from './ProductosArchivados';
+import {useAxios} from "../autenticacion/useAxios.js";
 
 const CATEGORIAS = ["Tortas", "Cupcakes", "Galletas", "Pies & Tartas", "Edición Especial"];
 
 export default function GestionProductos({ vendedorId }) {
+    const api = useAxios();
     const [productos, setProductos] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [vista, setVista] = useState('grid');
@@ -16,7 +18,6 @@ export default function GestionProductos({ vendedorId }) {
         nombre: '', descripcion: '', precio: '', stock: '', categoria: CATEGORIAS[0], imagenUrl: ''
     });
 
-    const token = sessionStorage.getItem('token');
     const colorCian = '#00d4ff';
 
     useEffect(() => {
@@ -30,15 +31,11 @@ export default function GestionProductos({ vendedorId }) {
     const obtenerProductos = async () => {
         setCargando(true);
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/productos/vendedor/${vendedorId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
+            // Fíjate que ya no hay headers, useAxios hace la magia
+            const response = await api.get(`/api/productos/vendedor/${vendedorId}`);
 
-            if (Array.isArray(data)) {
-                setProductos(data);
+            if (Array.isArray(response.data)) {
+                setProductos(response.data);
             } else {
                 setProductos([]);
             }
@@ -63,45 +60,37 @@ export default function GestionProductos({ vendedorId }) {
         }
 
         const esEdit = vista === 'edit';
-        const url = esEdit ? `${import.meta.env.VITE_API_URL}/api/productos/${seleccionado.id}` : `${import.meta.env.VITE_API_URL}/api/productos`;
-        const metodo = esEdit ? 'PUT' : 'POST';
+        const url = esEdit ? `/api/productos/${seleccionado.id}` : `/api/productos`;
         const dataBody = esEdit ? seleccionado : { ...nuevoProd, vendedorId };
 
         try {
-            const response = await fetch(url, {
-                method: metodo,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                    'X-User-Id': String(vendedorId),
-                    'X-User-Role': 'VENDEDOR'
-                },
-                body: JSON.stringify(dataBody)
-            });
-
-            if (response.ok) {
-                setVista('grid');
-                setSeleccionado(null);
-                setNuevoProd({ nombre: '', descripcion: '', precio: '', stock: '', categoria: CATEGORIAS[0], imagenUrl: '' });
-                obtenerProductos();
+            if (esEdit) {
+                await api.put(url, dataBody);
             } else {
-                setError("❌ Error al guardar. Revisa los datos.");
+                await api.post(url, dataBody);
             }
+
+            setVista('grid');
+            setSeleccionado(null);
+            setNuevoProd({ nombre: '', descripcion: '', precio: '', stock: '', categoria: CATEGORIAS[0], imagenUrl: '' });
+            obtenerProductos();
+
         } catch (err) {
-            setError("🔥 Error de conexión con el servidor.");
+            console.error(err);
+            setError("🔥 Error de conexión o permisos denegados.");
         }
     };
 
     const handleEliminar = async (id) => {
         if (!window.confirm("¿Retirar del inventario público? El producto se guardará en tu historial archivado.")) return;
-        await fetch(`${import.meta.env.VITE_API_URL}/api/productos/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'X-User-Role': 'VENDEDOR'
-            }
-        });
-        obtenerProductos();
+
+        try {
+            await api.delete(`/api/productos/${id}`);
+            obtenerProductos();
+        } catch (err) {
+            console.error("Error eliminando producto", err);
+            alert("No se pudo eliminar el producto.");
+        }
     };
 
     if (vista === 'detalle') {
