@@ -91,6 +91,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - "SPRING_AUTOCONFIGURE_EXCLUDE=com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaAutoConfiguration,com.azure.spring.cloud.autoconfigure.implementation.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration"
 
   servicio-perfil:
     build: ./servicios-backend/servicio-perfil
@@ -120,6 +121,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - "SPRING_AUTOCONFIGURE_EXCLUDE=com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaAutoConfiguration,com.azure.spring.cloud.autoconfigure.implementation.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration"
 
   servicio-pagos:
     build: ./servicios-backend/servicio-pagos
@@ -136,6 +138,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - "SPRING_AUTOCONFIGURE_EXCLUDE=com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaAutoConfiguration,com.azure.spring.cloud.autoconfigure.implementation.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration"
 
   frontend-react:
     build: ./gamebakes-web
