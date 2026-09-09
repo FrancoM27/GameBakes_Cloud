@@ -8,6 +8,6 @@ import java.util.List;
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> findByCategoria(String categoria);
     List<Producto> findByActivoTrue();
-    List<Producto> findByVendedorIdAndActivoTrue(Long vendedorId);
-    List<Producto> findByVendedorId(Long vendedorId);
+    List<Producto> findByVendedorIdAndActivoTrue(String vendedorId);
+    List<Producto> findByVendedorId(String vendedorId);
 }

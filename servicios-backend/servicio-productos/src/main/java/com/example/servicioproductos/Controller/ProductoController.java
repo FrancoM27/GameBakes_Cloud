@@ -21,7 +21,7 @@ public class ProductoController {
     }
 
     @GetMapping("/vendedor/{vendedorId}")
-    public List<Producto> listarPorVendedor(@PathVariable Long vendedorId){
+    public List<Producto> listarPorVendedor(@PathVariable String vendedorId){
         return productoService.listarPorVendedor(vendedorId);
     }
 
@@ -34,8 +34,7 @@ public class ProductoController {
             throw new RuntimeException("Solo los vendedores pueden crear productos");
         }
 
-        Long vendedorId = Long.parseLong(vendedorIdStr);
-        producto.setVendedorId(vendedorId);
+        producto.setVendedorId(vendedorIdStr);
 
         return ResponseEntity.ok(productoService.guardar(producto));
     }
