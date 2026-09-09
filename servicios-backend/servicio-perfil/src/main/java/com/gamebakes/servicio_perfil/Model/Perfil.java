@@ -17,7 +17,7 @@ public class Perfil {
     private Long idPerfil;
 
     @Column(name = "id_usuario", unique = true, nullable = false)
-    private Long usuarioId;
+    private String usuarioId;
 
     private String nombreCompleto;
     
