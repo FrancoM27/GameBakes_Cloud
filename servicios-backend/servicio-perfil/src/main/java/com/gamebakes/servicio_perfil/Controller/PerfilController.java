@@ -16,7 +16,7 @@ public class PerfilController {
     private PerfilService perfilService;
     
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<PerfilDTO> obtenerPerfil(@PathVariable Long usuarioId) {
+    public ResponseEntity<PerfilDTO> obtenerPerfil(@PathVariable String usuarioId) {
         return perfilService.obtenerPerfilPorUsuarioId(usuarioId)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
@@ -37,7 +37,7 @@ public class PerfilController {
     
     @PutMapping("/usuario/{usuarioId}")
     public ResponseEntity<PerfilDTO> actualizarPerfil(
-            @PathVariable Long usuarioId,
+            @PathVariable String usuarioId,
             @RequestBody PerfilDTO perfilDTO) {
         return perfilService.actualizarPerfil(usuarioId, perfilDTO)
             .map(ResponseEntity::ok)

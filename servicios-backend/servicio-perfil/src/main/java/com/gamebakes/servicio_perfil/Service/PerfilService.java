@@ -16,7 +16,7 @@ public class PerfilService {
     private PerfilRepository perfilRepository;
     
     @Transactional(readOnly = true)
-    public Optional<PerfilDTO> obtenerPerfilPorUsuarioId(Long usuarioId) {
+    public Optional<PerfilDTO> obtenerPerfilPorUsuarioId(String usuarioId) {
         return perfilRepository.findByUsuarioId(usuarioId)
             .map(this::convertirADTO);
     }
@@ -35,7 +35,7 @@ public class PerfilService {
     }
     
     @Transactional
-    public Optional<PerfilDTO> actualizarPerfil(Long usuarioId, PerfilDTO perfilDTO) {
+    public Optional<PerfilDTO> actualizarPerfil(String usuarioId, PerfilDTO perfilDTO) {
         return perfilRepository.findByUsuarioId(usuarioId)
             .map(perfil -> {
                 perfil.setNombreCompleto(perfilDTO.getNombreCompleto());
