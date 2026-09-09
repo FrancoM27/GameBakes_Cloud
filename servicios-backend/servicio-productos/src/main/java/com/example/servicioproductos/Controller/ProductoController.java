@@ -80,9 +80,9 @@ public class ProductoController {
             throw new RuntimeException("Acceso denegado");
         }
 
-        Long vendedorId = Long.parseLong(vendedorIdStr);
+        
         producto.setId(id);
-        producto.setVendedorId(vendedorId);
+        producto.setVendedorId(vendedorIdStr);
 
         return ResponseEntity.ok(productoService.guardar(producto));
     }
