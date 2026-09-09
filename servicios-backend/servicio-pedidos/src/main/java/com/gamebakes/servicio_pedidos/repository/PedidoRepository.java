@@ -13,7 +13,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByClienteId(Long clienteId);
 
     //Para la gestión del Vendedor
-    List<Pedido> findByVendedorId(Long vendedorId);
+    List<Pedido> findByVendedorId(String vendedorId);
 
     //Para validar compras y estado entregado
     List<Pedido> findByClienteIdAndProductoId(Long clienteId, Long productoId);

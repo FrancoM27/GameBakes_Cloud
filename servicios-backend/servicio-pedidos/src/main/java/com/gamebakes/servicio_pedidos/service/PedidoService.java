@@ -24,7 +24,7 @@ public class PedidoService {
     }
 
     //VISTA VENDEDOR: Obtener pedidos dirigidos a sus productos
-    public List<Pedido> obtenerPedidosPorVendedor(Long vendedorId) {
+    public List<Pedido> obtenerPedidosPorVendedor(String vendedorId) {
         return pedidoRepository.findByVendedorId(vendedorId);
     }
 
