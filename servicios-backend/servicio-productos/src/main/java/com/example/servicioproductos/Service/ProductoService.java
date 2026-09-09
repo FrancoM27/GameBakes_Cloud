@@ -25,7 +25,7 @@ public class ProductoService {
     }
 
     // ¡AQUÍ ESTÁ EL CAMBIO MAGISTRAL!
-    public List<Producto> listarPorVendedor(Long vendedorId) {
+    public List<Producto> listarPorVendedor(String vendedorId) {
         return productoRepository.findByVendedorId(vendedorId);
     }
 
