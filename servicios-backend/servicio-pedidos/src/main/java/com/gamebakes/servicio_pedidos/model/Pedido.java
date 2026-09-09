@@ -14,7 +14,7 @@ public class Pedido {
     private String clienteNombre; 
     private Long productoId; //ID del producto
     private String productoNombre;
-    private Long vendedorId; //ID del vendedor que debe preparar el pedido
+    private String vendedorId; //ID del vendedor que debe preparar el pedido (GUID de Azure AD Entra ID)
     private String estado; //PENDIENTE, PREPARACION, EN_CAMINO, ENTREGADO
     private Integer cantidad;
 }

@@ -20,7 +20,7 @@ public class PedidoController {
     }
 
     @GetMapping("/vendedor/{vendedorId}")
-    public List<Pedido> listarPorVendedor(@PathVariable Long vendedorId) {
+    public List<Pedido> listarPorVendedor(@PathVariable String vendedorId) {
         return pedidoService.obtenerPedidosPorVendedor(vendedorId);
     }
 

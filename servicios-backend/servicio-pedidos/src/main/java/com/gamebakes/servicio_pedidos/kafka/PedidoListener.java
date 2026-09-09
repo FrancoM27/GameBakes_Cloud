@@ -58,7 +58,7 @@ public class PedidoListener {
                 Pedido nuevoPedido = new Pedido();
                 nuevoPedido.setClienteId(clienteId);
                 nuevoPedido.setClienteNombre(clienteNombre);
-                nuevoPedido.setVendedorId(1L);
+                nuevoPedido.setVendedorId("1");
                 nuevoPedido.setProductoNombre("Producto Comprado");
                 nuevoPedido.setEstado("PENDIENTE");
                 nuevoPedido.setCantidad(1);
@@ -86,7 +86,7 @@ public class PedidoListener {
                 nuevoPedido.setClienteNombre(clienteNombre != null ? clienteNombre : "Cliente");
                 nuevoPedido.setProductoId(productoId);
                 nuevoPedido.setProductoNombre(productoData.get("nombre") != null ? productoData.get("nombre").toString() : "Producto");
-                nuevoPedido.setVendedorId(productoData.get("vendedorId") != null ? Long.valueOf(productoData.get("vendedorId").toString()) : 1L);
+                nuevoPedido.setVendedorId(productoData.get("vendedorId") != null ? productoData.get("vendedorId").toString() : "1");
                 nuevoPedido.setCantidad(cantidad);
                 nuevoPedido.setEstado("PENDIENTE");
 
