@@ -37,7 +37,7 @@ public class ResenaController {
 
     //Listar por vendedor
     @GetMapping("/vendedor/{vendedorId}")
-    public ResponseEntity<List<Resena>> listarPorVendedor(@PathVariable Long vendedorId) {
+    public ResponseEntity<List<Resena>> listarPorVendedor(@PathVariable String vendedorId) {
         List<Resena> resenas = resenaService.obtenerPorVendedor(vendedorId);
         return ResponseEntity.ok(resenas);
     }

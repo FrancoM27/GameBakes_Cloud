@@ -25,5 +25,5 @@ public class Resena {
 
     //Interacción del Vendedor
     private String respuestaVendedor;
-    private Long vendedorId; //ID del vendedor dueño del producto
+    private String vendedorId; //ID del vendedor dueño del producto (GUID de Azure AD Entra ID)
 }

@@ -12,7 +12,7 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
     List<Resena> findByProductoId(Long productoId);
 
     // Para que el vendedor recupere todas las reseñas de sus productos
-    List<Resena> findByVendedorId(Long vendedorId);
+    List<Resena> findByVendedorId(String vendedorId);
 
     // Para que el cliente vea todas sus reseñas
     List<Resena> findByClienteId(Long clienteId);
